@@ -5,6 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from llama_cloud import LlamaCloud
 
+from _db import get_supabase_client, get_auction_company_id, save_catalog
 from _dto import AuctionCatalogDto, AuctionDetailsDto, AuctionSectionDto, AuctionListingDto
 
 INPUT_DIR = Path("Input")
@@ -62,16 +63,17 @@ def save_raw_json(data: dict, output_path: Path) -> None:
 
 def map_to_catalog_dto(data: dict) -> AuctionCatalogDto:
     """Map raw extracted JSON into an AuctionCatalogDto."""
+    publication_details = data.get("publication_details", {}) or {}
     details = AuctionDetailsDto(
-        publicationNumber=data.get("publicationNumber", ""),
-        publicationDate=data.get("publicationDate", ""),
+        publicationNumber=publication_details.get("publication_number", ""),
+        publicationDate=publication_details.get("publication_date", ""),
     )
 
     sections = []
     for section in data.get("sections", []) or []:
         listings = [
             AuctionListingDto(
-                lotNumber=listing.get("lotNumber", ""),
+                lotNumber=listing.get("lot_number", ""),
                 description=listing.get("description", ""),
                 condition=listing.get("condition", ""),
             )
@@ -79,7 +81,7 @@ def map_to_catalog_dto(data: dict) -> AuctionCatalogDto:
         ]
         sections.append(
             AuctionSectionDto(
-                sectionTitle=section.get("sectionTitle", ""),
+                sectionTitle=section.get("section_title", ""),
                 listings=listings,
             )
         )
@@ -100,6 +102,11 @@ def main():
     client = get_client()
     config_id = get_extract_config_id()
     print(f"Using extract configuration: {config_id}")
+
+    print("Connecting to Supabase...")
+    supabase_client = get_supabase_client()
+    company_id = get_auction_company_id()
+    print(f"Using auction company ID: {company_id}")
 
     catalogs: list[AuctionCatalogDto] = []
     files_processed = 0
@@ -130,10 +137,22 @@ def main():
         except Exception as e:
             print(f"Error processing {file_path.name}: {e}")
 
-    # TODO: persist catalogs to the database once it is set up.
-    # This is also where the future Azure Function will hand off the DTOs.
+    # Persist catalogs to Supabase
+    catalogs_saved = 0
+    for catalog in catalogs:
+        try:
+            auction_id = save_catalog(supabase_client, catalog, company_id)
+            listing_count = sum(len(section.listings) for section in catalog.sections)
+            print(
+                f"Saved auction {auction_id} to Supabase "
+                f"(publication {catalog.details.publicationNumber}, {listing_count} listing(s))"
+            )
+            catalogs_saved += 1
+        except Exception as e:
+            print(f"Error saving catalog (publication {catalog.details.publicationNumber}) to Supabase: {e}")
 
     print(f"\nFinished processing. Total files successfully extracted: {files_processed}")
+    print(f"Total catalogs saved to Supabase: {catalogs_saved}")
 
 
 if __name__ == "__main__":
