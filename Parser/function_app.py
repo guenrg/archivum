@@ -1,3 +1,4 @@
+"""Azure Functions app: EventGrid-sourced blob trigger for auction PDF processing."""
 import json
 import logging
 
