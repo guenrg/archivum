@@ -1,4 +1,3 @@
-"""Azure Functions app: EventGrid-sourced blob trigger for auction PDF processing."""
 import json
 import logging
 
@@ -14,7 +13,6 @@ app = func.FunctionApp()
     arg_name="inputblob",
     path="input-pdfs/{name}.pdf",
     connection="AzureWebJobsStorage",
-    source="EventGrid",
 )
 @app.blob_output(
     arg_name="outputblob",
