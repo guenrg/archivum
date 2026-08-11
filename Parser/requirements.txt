@@ -1,3 +1,4 @@
+azure-functions
 llama-cloud>=2
 python-dotenv
 supabase
