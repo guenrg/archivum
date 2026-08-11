@@ -13,6 +13,7 @@ app = func.FunctionApp()
     arg_name="inputblob",
     path="input-pdfs/{name}.pdf",
     connection="AzureWebJobsStorage",
+    source="EventGrid",
 )
 @app.blob_output(
     arg_name="outputblob",
