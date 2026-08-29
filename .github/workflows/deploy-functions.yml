@@ -35,15 +35,11 @@ jobs:
         working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
         run: echo 'archivum @ file:./shared' >> requirements.txt
 
-      - name: Enable remote build on the function app
+      - name: Remove incompatible app settings from consumption plan
         run: |
-          az functionapp config appsettings set \
-            -g "$AZURE_RESOURCE_GROUP" -n "$AZURE_FUNCTIONAPP_NAME" \
-            --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true ENABLE_ORYX_BUILD=true \
-            -o none
           az functionapp config appsettings delete \
             -g "$AZURE_RESOURCE_GROUP" -n "$AZURE_FUNCTIONAPP_NAME" \
-            --setting-names WEBSITE_RUN_FROM_PACKAGE \
+            --setting-names SCM_DO_BUILD_DURING_DEPLOYMENT ENABLE_ORYX_BUILD \
             -o none || true
 
       - name: Deploy to Azure Functions
