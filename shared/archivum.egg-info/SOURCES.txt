@@ -1,0 +1,16 @@
+pyproject.toml
+archivum/__init__.py
+archivum.egg-info/PKG-INFO
+archivum.egg-info/SOURCES.txt
+archivum.egg-info/dependency_links.txt
+archivum.egg-info/requires.txt
+archivum.egg-info/top_level.txt
+archivum/core/__init__.py
+archivum/core/processing.py
+archivum/db/__init__.py
+archivum/db/supabase_client.py
+archivum/dto/__init__.py
+archivum/dto/auction_catalog.py
+archivum/dto/auction_details.py
+archivum/dto/auction_listing.py
+archivum/dto/auction_section.py

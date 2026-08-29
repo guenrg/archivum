@@ -1,30 +1,22 @@
-import os
 import re
 from datetime import datetime
 
 from supabase import Client, create_client
 
-from _dto import AuctionCatalogDto
+from archivum.config import get_key
+from archivum.dto import AuctionCatalogDto
 
 
 def get_supabase_client() -> Client:
-    """Create a Supabase client using credentials from the environment."""
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_KEY")
-    if not url:
-        raise ValueError("SUPABASE_URL is not set. Add it to your .env file or environment.")
-    if not key:
-        raise ValueError("SUPABASE_KEY is not set. Add it to your .env file or environment.")
-
+    """Create a Supabase client using credentials from App Configuration."""
+    url = get_key("supabase_url")
+    key = get_key("supabase_key")
     return create_client(url, key)
 
 
 def get_auction_company_id() -> int:
-    """Read the auction company ID (bigint) from the environment."""
-    company_id = os.getenv("AUCTION_COMPANY_ID")
-    if not company_id:
-        raise ValueError("AUCTION_COMPANY_ID is not set. Add it to your .env file or environment.")
-    return int(company_id)
+    """Read the auction company ID (bigint) from App Configuration."""
+    return int(get_key("auction_company_id"))
 
 
 def _parse_auction_number(publication_number: str) -> int | None:

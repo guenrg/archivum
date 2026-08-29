@@ -1,0 +1,68 @@
+name: Deploy Azure Functions App
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "functions/**"
+      - "shared/**"
+      - ".github/workflows/deploy-functions.yml"
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_NAME: func-parser-southcentral
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: functions
+  AZURE_RESOURCE_GROUP: Archivum
+  AZURE_STORAGE_ACCOUNT_NAME: archivum9b78
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Copy shared package into function app
+        run: cp -r shared functions/shared
+
+      - name: Add shared package to requirements.txt for deployment
+        working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        run: echo 'archivum @ file:./shared' >> requirements.txt
+
+      - name: Enable remote build on the function app
+        run: |
+          az functionapp config appsettings set \
+            -g "$AZURE_RESOURCE_GROUP" -n "$AZURE_FUNCTIONAPP_NAME" \
+            --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true ENABLE_ORYX_BUILD=true \
+            -o none
+          az functionapp config appsettings delete \
+            -g "$AZURE_RESOURCE_GROUP" -n "$AZURE_FUNCTIONAPP_NAME" \
+            --setting-names WEBSITE_RUN_FROM_PACKAGE \
+            -o none || true
+
+      - name: Deploy to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          remote-build: true
+
+      - name: Create Event Grid subscription for blob trigger
+        run: |
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          STORAGE_ACCOUNT_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${AZURE_RESOURCE_GROUP}/providers/Microsoft.Storage/storageAccounts/${AZURE_STORAGE_ACCOUNT_NAME}"
+          az eventgrid event-subscription create \
+            --name "blob-created-parser" \
+            --source-resource-id "$STORAGE_ACCOUNT_ID" \
+            --endpoint "https://${AZURE_FUNCTIONAPP_NAME}.azurewebsites.net/runtime/webhooks/eventgrid?functionName=process_auction_pdf" \
+            --endpoint-type azurefunction \
+            --included-event-types Microsoft.Storage.BlobCreated \
+            --subject-begins-with "/blobServices/default/containers/input-pdfs/blobs/" \
+            --subject-ends-with ".pdf" \
+            -o none || echo "Event Grid subscription may already exist"

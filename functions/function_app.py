@@ -3,8 +3,11 @@ import logging
 
 import azure.functions as func
 
-from _core import extract_bytes, get_client, get_extract_config_id, map_to_catalog_dto
-from _db import get_supabase_client, get_auction_company_id, save_catalog
+from archivum import initialize
+from archivum.core import extract_bytes, get_client, get_extract_config_id, map_to_catalog_dto
+from archivum.db import get_supabase_client, get_auction_company_id, save_catalog
+
+initialize()
 
 app = func.FunctionApp()
 
@@ -12,12 +15,13 @@ app = func.FunctionApp()
 @app.blob_trigger(
     arg_name="inputblob",
     path="input-pdfs/{name}.pdf",
-    connection="AzureWebJobsStorage",
+    connection="blob_storage_connection",
+    source="EventGrid",
 )
 @app.blob_output(
     arg_name="outputblob",
     path="output-json/{name}.json",
-    connection="AzureWebJobsStorage",
+    connection="blob_storage_connection",
 )
 def process_auction_pdf(inputblob: func.InputStream, outputblob: func.Out[str]) -> None:
     """Triggered when a PDF is uploaded to the 'input-pdfs' container.
