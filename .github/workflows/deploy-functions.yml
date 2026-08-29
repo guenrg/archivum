@@ -31,9 +31,16 @@ jobs:
       - name: Copy shared package into function app
         run: cp -r shared functions/shared
 
-      - name: Add shared package to requirements.txt for deployment
+      - name: Build shared package as wheel
+        run: |
+          pip install build
+          python -m build shared --wheel --outdir functions/
+
+      - name: Add shared wheel to requirements.txt
         working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-        run: echo 'archivum @ file:./shared' >> requirements.txt
+        run: |
+          WHEEL_FILE=$(ls *.whl)
+          echo "$WHEEL_FILE" >> requirements.txt
 
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
