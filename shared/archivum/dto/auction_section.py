@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from .AuctionListing import AuctionListingDto
+from .auction_listing import AuctionListingDto
+
 
 @dataclass(slots=True)
 class AuctionSectionDto:

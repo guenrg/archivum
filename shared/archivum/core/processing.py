@@ -1,26 +1,20 @@
-import os
 from pathlib import Path
 
 from llama_cloud import LlamaCloud
 
-from _dto import AuctionCatalogDto, AuctionDetailsDto, AuctionSectionDto, AuctionListingDto
+from archivum.config import get_key
+from archivum.dto import AuctionCatalogDto, AuctionDetailsDto, AuctionSectionDto, AuctionListingDto
 
 
 def get_client() -> LlamaCloud:
-    """Create a LlamaCloud client using the API key from the environment."""
-    api_key = os.getenv("LLAMA_CLOUD_API_KEY")
-    if not api_key:
-        raise ValueError("LLAMA_CLOUD_API_KEY is not set. Add it to your .env file or environment.")
-
+    """Create a LlamaCloud client using the API key from App Configuration."""
+    api_key = get_key("llama_cloud_api_key")
     return LlamaCloud(api_key=api_key)
 
 
 def get_extract_config_id() -> str:
-    """Read the saved Extract (v2) configuration ID from the environment."""
-    config_id = os.getenv("LLAMA_EXTRACT_CONFIG_ID")
-    if not config_id:
-        raise ValueError("LLAMA_EXTRACT_CONFIG_ID is not set. Add it to your .env file or environment.")
-    return config_id
+    """Read the saved Extract (v2) configuration ID from App Configuration."""
+    return get_key("llama_extract_config_id")
 
 
 def extract_bytes(client: LlamaCloud, config_id: str, file_bytes: bytes, filename: str) -> dict:

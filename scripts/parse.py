@@ -3,9 +3,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from _core import extract_file, get_client, get_extract_config_id, map_to_catalog_dto
-from _db import get_supabase_client, get_auction_company_id, save_catalog
-from _dto import AuctionCatalogDto
+from archivum.core import extract_file, get_client, get_extract_config_id, map_to_catalog_dto
+from archivum.db import get_supabase_client, get_auction_company_id, save_catalog
+from archivum.dto import AuctionCatalogDto
 
 INPUT_DIR = Path("Input")
 OUTPUT_DIR = Path("Output")

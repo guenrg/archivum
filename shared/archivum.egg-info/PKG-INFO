@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: archivum
+Version: 0.1.0
+Summary: Shared modules for the Archivum project
+Requires-Python: >=3.12
+Requires-Dist: llama-cloud>=2
+Requires-Dist: python-dotenv
+Requires-Dist: supabase
