@@ -23,6 +23,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Log in to Azure
         uses: azure/login@v2
         with:
@@ -49,6 +54,10 @@ jobs:
         run: |
           pip list --path="functions/.python_packages/lib/site-packages" | grep -i azure
 
+      - name: Smoke test imports
+        working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        run: |
+          PYTHONPATH=".python_packages/lib/site-packages" python -c "import archivum; print('archivum imports OK')"
 
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1

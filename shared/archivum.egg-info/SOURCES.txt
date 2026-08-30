@@ -1,5 +1,6 @@
 pyproject.toml
 archivum/__init__.py
+archivum/config.py
 archivum.egg-info/PKG-INFO
 archivum.egg-info/SOURCES.txt
 archivum.egg-info/dependency_links.txt

@@ -6,3 +6,7 @@ Requires-Python: >=3.12
 Requires-Dist: llama-cloud>=2
 Requires-Dist: python-dotenv
 Requires-Dist: supabase
+Requires-Dist: azure-identity
+Requires-Dist: azure-appconfiguration>=1.7.0
+Requires-Dist: azure-appconfiguration-provider
+Requires-Dist: azure-keyvault-secrets
