@@ -31,5 +31,8 @@ def get_key(key: str) -> Any:
         value = _config[key]
         return value
     except KeyError:
-        """Gonna Do Something More here at some point """
-        raise RuntimeError("missing key")
+        # Debug: print available keys to help diagnose
+        if _config is not None:
+            available_keys = list(_config.keys())
+            raise RuntimeError(f"missing key '{key}'. Available keys: {available_keys}")
+        raise RuntimeError(f"missing key '{key}'. Config not initialized.")

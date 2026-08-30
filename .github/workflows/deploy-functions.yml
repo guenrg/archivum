@@ -112,12 +112,36 @@ jobs:
         run: |
           SUBSCRIPTION_ID=$(az account show --query id -o tsv)
           STORAGE_ACCOUNT_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${AZURE_RESOURCE_GROUP}/providers/Microsoft.Storage/storageAccounts/${AZURE_STORAGE_ACCOUNT_NAME}"
-          FUNCTION_RESOURCE_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${AZURE_RESOURCE_GROUP}/providers/Microsoft.Web/sites/${AZURE_FUNCTIONAPP_NAME}/functions/process_auction_pdf"
+
+          # Fail fast if the function was not indexed by the host.
+          FUNCTION_RESOURCE_ID=$(az functionapp function show -g "$AZURE_RESOURCE_GROUP" -n "$AZURE_FUNCTIONAPP_NAME" --function-name process_auction_pdf --query id -o tsv)
+          if [ -z "$FUNCTION_RESOURCE_ID" ]; then
+            echo "::error::Function 'process_auction_pdf' not found on $AZURE_FUNCTIONAPP_NAME - host may have failed to index functions"
+            exit 1
+          fi
+
+          # Blob triggers with source=EventGrid require a WEBHOOK subscription to the
+          # blobs extension endpoint (endpoint-type azurefunction only supports
+          # EventGrid-trigger functions).
+          BLOBS_KEY=$(az functionapp keys list -g "$AZURE_RESOURCE_GROUP" -n "$AZURE_FUNCTIONAPP_NAME" --query "systemKeys.blobs_extension" -o tsv)
+          if [ -z "$BLOBS_KEY" ]; then
+            echo "::error::blobs_extension system key not found - is the host healthy?"
+            exit 1
+          fi
+          echo "::add-mask::$BLOBS_KEY"
+
+          APP_HOSTNAME=$(az functionapp show -g "$AZURE_RESOURCE_GROUP" -n "$AZURE_FUNCTIONAPP_NAME" --query defaultHostName -o tsv)
+          if [ -z "$APP_HOSTNAME" ]; then
+            echo "::error::Could not resolve defaultHostName for $AZURE_FUNCTIONAPP_NAME"
+            exit 1
+          fi
+          echo "App hostname: $APP_HOSTNAME"
+
           az eventgrid event-subscription create \
             --name "blob-created-parser" \
             --source-resource-id "$STORAGE_ACCOUNT_ID" \
-            --endpoint "$FUNCTION_RESOURCE_ID" \
-            --endpoint-type azurefunction \
+            --endpoint-type webhook \
+            --endpoint "https://${APP_HOSTNAME}/runtime/webhooks/blobs?functionName=Host.Functions.process_auction_pdf&code=${BLOBS_KEY}" \
             --included-event-types Microsoft.Storage.BlobCreated \
             --subject-begins-with "/blobServices/default/containers/input-pdfs/blobs/" \
             --subject-ends-with ".pdf" \
