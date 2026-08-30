@@ -1,3 +1,7 @@
 llama-cloud>=2
 python-dotenv
 supabase
+azure-identity
+azure-appconfiguration>=1.7.0
+azure-appconfiguration-provider
+azure-keyvault-secrets

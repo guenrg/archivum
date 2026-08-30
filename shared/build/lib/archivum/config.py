@@ -1,0 +1,35 @@
+from azure.appconfiguration.provider import load, SettingSelector
+from azure.identity import DefaultAzureCredential
+import os
+from typing import Any
+
+_config = None
+
+def initialize() -> None:
+    global _config
+
+    if _config is not None:
+        return
+
+    credential = DefaultAzureCredential()
+    endpoint = os.environ["az_appconfig_endpoint"]
+
+    _config = load(
+        endpoint=endpoint,
+        credential=credential,
+        keyvault_credential=credential,
+        trim_prefixes=["data", "parsing"]
+    )
+
+    # Expose all config values as env vars so Azure Functions
+    # can resolve trigger/output binding connections at startup
+    for key, value in _config.items():
+        os.environ[key] = str(value)
+
+def get_key(key: str) -> Any:
+    try:
+        value = _config[key]
+        return value
+    except KeyError:
+        """Gonna Do Something More here at some point """
+        raise RuntimeError("missing key")
