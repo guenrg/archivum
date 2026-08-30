@@ -33,18 +33,12 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Build shared package as wheel
+      - name: Copy shared source into functions
         run: |
-          pip install build
-          python -m build shared --wheel --outdir functions/
+          cp -r shared/archivum functions/archivum
+          find functions/archivum -type d -name __pycache__ -exec rm -rf {} + || true
 
-      - name: Add shared wheel to requirements.txt
-        working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-        run: |
-          WHEEL_FILE=$(ls *.whl)
-          echo "$WHEEL_FILE" >> requirements.txt
-
-      - name: Install dependencies and build package
+      - name: Install dependencies
         working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
         run: |
           python -m pip install --upgrade pip
@@ -57,7 +51,7 @@ jobs:
       - name: Smoke test imports
         working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
         run: |
-          PYTHONPATH=".python_packages/lib/site-packages" python -c "import archivum; print('archivum imports OK')"
+          PYTHONPATH=".:./.python_packages/lib/site-packages" python -c "import archivum; print('archivum imports OK')"
 
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1

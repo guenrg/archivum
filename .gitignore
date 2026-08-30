@@ -11,6 +11,9 @@ venv/
 # IDE
 .vscode/
 
+# Build artifacts
+functions/archivum/
+
 # Test data
 Input/
 Output/
