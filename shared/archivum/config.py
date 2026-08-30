@@ -18,7 +18,7 @@ def initialize() -> None:
         endpoint=endpoint,
         credential=credential,
         keyvault_credential=credential,
-        trim_prefixes=["data:", ":parsing:"]
+        trim_prefixes=["data:", "parsing:"]
     )
 
     # Debug: print all loaded keys to help diagnose missing keys
