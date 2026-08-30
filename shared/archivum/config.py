@@ -21,6 +21,10 @@ def initialize() -> None:
         trim_prefixes=["data", "parsing"]
     )
 
+    # Debug: print all loaded keys to help diagnose missing keys
+    loaded_keys = list(_config.keys())
+    print(f"[config] Loaded {len(loaded_keys)} keys from App Configuration: {loaded_keys}")
+
     # Expose all config values as env vars so Azure Functions
     # can resolve trigger/output binding connections at startup
     for key, value in _config.items():
