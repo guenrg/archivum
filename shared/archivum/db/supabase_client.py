@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 
-from supabase import Client, create_client
+from supabase import Client, ClientOptions, create_client
 
 from archivum.config import get_key
 from archivum.dto import AuctionCatalogDto
@@ -11,7 +11,9 @@ def get_supabase_client() -> Client:
     """Create a Supabase client using credentials from App Configuration."""
     url = get_key("supabase_url")
     key = get_key("supabase_key")
-    return create_client(url, key)
+    options = ClientOptions(schema="auctions")
+    
+    return create_client(url, key, options=options)
 
 
 def get_auction_company_id() -> int:
