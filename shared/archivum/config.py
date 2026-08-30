@@ -1,4 +1,4 @@
-from azure.appconfiguration.provider import load, SettingSelector
+from azure.appconfiguration import load, SettingSelector
 from azure.identity import DefaultAzureCredential
 import os
 from typing import Any
