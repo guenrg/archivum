@@ -12,7 +12,8 @@ dependencies = [
     "python-dotenv",
     "supabase",
     "azure-identity",
-    "azure-appconfiguration",
+    "azure-appconfiguration>=1.7.0",
+    "azure-keyvault-secrets",
 ]
 
 [tool.setuptools.packages.find]
