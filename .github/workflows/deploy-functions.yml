@@ -83,6 +83,31 @@ jobs:
           echo "=== Checking recent logs ==="
           az monitor activity-log list --resource-id "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$AZURE_RESOURCE_GROUP/providers/Microsoft.Web/sites/$AZURE_FUNCTIONAPP_NAME" --max-events 5 -o table || echo "No recent activity logs"
 
+      - name: Fetch host runtime logs
+        if: always()
+        run: |
+          echo "=== Enabling filesystem logging (no-op if already enabled) ==="
+          az webapp log config -g "$AZURE_RESOURCE_GROUP" -n "$AZURE_FUNCTIONAPP_NAME" --docker-container-logging filesystem -o none || true
+
+          echo "=== Waiting for host to restart and index functions ==="
+          sleep 60
+
+          echo "=== Fetching Kudu docker/container logs (includes Python worker tracebacks) ==="
+          CREDS=$(az webapp deployment list-publishing-credentials -g "$AZURE_RESOURCE_GROUP" -n "$AZURE_FUNCTIONAPP_NAME" --query "{user: publishingUserName, pass: publishingPassword}" -o json)
+          KUDU_USER=$(echo "$CREDS" | jq -r .user)
+          KUDU_PASS=$(echo "$CREDS" | jq -r .pass)
+          LOG_URLS=$(curl -s -u "$KUDU_USER:$KUDU_PASS" "https://${AZURE_FUNCTIONAPP_NAME}.scm.azurewebsites.net/api/logs/docker" | jq -r '.[].href' || true)
+          for URL in $LOG_URLS; do
+            echo "--- $URL ---"
+            curl -s -u "$KUDU_USER:$KUDU_PASS" "$URL" | tail -n 150 || true
+          done
+
+          echo ""
+          echo "=== Host status probe ==="
+          az rest --method post \
+            --url "https://management.azure.com/subscriptions/$(az account show --query id -o tsv)/resourceGroups/${AZURE_RESOURCE_GROUP}/providers/Microsoft.Web/sites/${AZURE_FUNCTIONAPP_NAME}/host/default/listKeys?api-version=2023-12-01" \
+            -o none && echo "Host responded OK" || echo "Host is NOT healthy - check container logs above for the traceback"
+
       - name: Create Event Grid subscription for blob trigger
         run: |
           SUBSCRIPTION_ID=$(az account show --query id -o tsv)
