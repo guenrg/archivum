@@ -64,13 +64,17 @@ def save_catalog(client: Client, catalog: AuctionCatalogDto, company_id: int) ->
     listing_rows = []
     for section in catalog.sections:
         for listing in section.listings:
+            lot_number = listing.lotNumber
+            lot_description = _compose_lot_description(
+                section.sectionTitle, listing.description, listing.condition
+            )
+            if not lot_number or not lot_description:
+                continue
             listing_rows.append(
                 {
                     "auction_id": auction_id,
-                    "lot_number": listing.lotNumber,
-                    "lot_description": _compose_lot_description(
-                        section.sectionTitle, listing.description, listing.condition
-                    ),
+                    "lot_number": lot_number,
+                    "lot_description": lot_description,
                 }
             )
 
